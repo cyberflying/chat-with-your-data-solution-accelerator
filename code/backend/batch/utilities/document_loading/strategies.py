@@ -1,5 +1,6 @@
 from enum import Enum
 from .layout import LayoutDocumentLoading
+from .layout2 import Layout2DocumentLoading
 from .read import ReadDocumentLoading
 from .web import WebDocumentLoading
 from .word_document import WordDocumentLoading
@@ -7,6 +8,7 @@ from .word_document import WordDocumentLoading
 
 class LoadingStrategy(Enum):
     LAYOUT = "layout"
+    LAYOUT2 = "layout2"
     READ = "read"
     WEB = "web"
     DOCX = "docx"
@@ -15,6 +17,8 @@ class LoadingStrategy(Enum):
 def get_document_loader(loader_strategy: str):
     if loader_strategy == LoadingStrategy.LAYOUT.value:
         return LayoutDocumentLoading()
+    elif loader_strategy == LoadingStrategy.LAYOUT2.value:
+        return Layout2DocumentLoading()
     elif loader_strategy == LoadingStrategy.READ.value:
         return ReadDocumentLoading()
     elif loader_strategy == LoadingStrategy.WEB.value:

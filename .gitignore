@@ -405,6 +405,7 @@ FodyWeavers.xsd
 # Python
 .env
 .venv
+*.env
 
 temp/
 .azure

@@ -206,7 +206,7 @@ class AzureBlobStorageClient:
                             if blob.metadata
                             else False
                         ),
-                        "fullpath": f"{self.endpoint}{self.container_name}/{blob.name}?{sas}",
+                        "fullpath": self.get_blob_sas(blob.name),
                         "converted_filename": (
                             blob.metadata.get("converted_filename", "")
                             if blob.metadata
@@ -217,7 +217,7 @@ class AzureBlobStorageClient:
                 )
             else:
                 converted_files[blob.name] = (
-                    f"{self.endpoint}{self.container_name}/{blob.name}?{sas}"
+                    self.get_blob_sas(blob.name)
                 )
 
         for file in files:
@@ -252,8 +252,11 @@ class AzureBlobStorageClient:
 
     def get_blob_sas(self, file_name):
         # Generate a SAS URL to the blob and return it
+        blob_client = self.blob_service_client.get_blob_client(
+            container=self.container_name, blob=file_name
+        )
         return (
-            f"{self.endpoint}{self.container_name}/{file_name}"
+            blob_client.url
             + "?"
             + generate_blob_sas(
                 account_name=self.account_name,
