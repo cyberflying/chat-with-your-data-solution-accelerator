@@ -146,69 +146,12 @@ try:
     embedder = EmbedderFactory.create(env_helper)
 
     
-    with st.expander("Add documents", expanded=True):
+    with st.expander("Add documents: upload > embedder", expanded=True):
         uploaded_files = st.file_uploader(
             "Upload a document to add it to the Azure Storage Account, compute embeddings and add them to the Azure AI Search index. Check your configuration for available document processors.",
             type=file_type,
             accept_multiple_files=True,
             key="file_uploader",
-        )
-        if uploaded_files is not None:
-            for up in uploaded_files:
-                # Check if the file has just been uploaded  
-                if up.name in st.session_state.get("uploaded_files", []):  
-                    st.warning(f"The file '{up.name}' has just been uploaded.")  
-                    continue  # Skip processing this file and continue with the next one
-                if st.session_state.get("filename", "") != up.name:
-                    # Upload a new file
-                    # To read file as bytes:
-                    bytes_data = up.getvalue()
-                    st.session_state["filename"] = up.name
-                    st.session_state["file_url"] = blob_client.upload_file(bytes_data, up.name, metadata={"title": urllib.parse.quote(up.name)})
-                    st.success(f"""File '{up.name}' uploaded to Azure Storage, stored at {st.session_state["file_url"]}.""")
-                    # Convert the file to markdown file
-                    with st.spinner(f"Converting file '{up.name}' ..."):
-                        md_content = azure_document_intelligence_client.analyze_layout(st.session_state["file_url"], up.name, gen_image_description=True)
-                        converted_file_name = f"converted/{up.name}_converted.md"
-                        # converted_file_url = blob_client.upload_file(md_content.encode('utf-8'), converted_file_name)
-                        # blob_client.upsert_blob_metadata(up.name, {"converted": "true"})
-                    st.success(f"Converted file '{up.name}' to the markdown file '{converted_file_name}', and uploaded to converted_file_url")
-                    # Chunk the markdown file
-                    with st.spinner(f"Chunking file: '{converted_file_name}' ..."):
-                        md_file_content = blob_client.download_file(converted_file_name).decode('utf-8')
-                        # st.write("md_content == md_file_content: ", md_content == md_file_content)
-                        splits = text_splitter.split_text(md_file_content)
-                    st.success(f"Chunked file '{converted_file_name}' into {len(splits)} chunks.")
-                    # Embedding the chunks
-                    with st.spinner(f"Embedding and indexing file: '{converted_file_name}' ..."):
-                        source_documents = format_to_source_document(st.session_state["file_url"], splits)
-                        documents_to_upload: List[SourceDocument] = []
-                        for document in source_documents:
-                            documents_to_upload.append(convert_to_search_document(document))
-                        response = azure_search_helper.get_search_client().upload_documents(
-                            documents_to_upload
-                        )
-                        if not all([r.succeeded for r in response]):
-                            logger.error("Failed to upload documents to search index")
-                            raise Exception(response)
-                        blob_client.upsert_blob_metadata(up.name, {"embeddings_added": "true"})
-                    st.success(f"file '{converted_file_name}' embedd to vector store.")
-
-                # Update the list of uploaded files in the session state
-                if "uploaded_files" not in st.session_state:
-                    st.session_state["uploaded_files"] = []
-                st.session_state["uploaded_files"].append(up.name)
-            if len(uploaded_files) > 0:
-                st.success(
-                    f"{len(uploaded_files)} documents uploaded. Embeddings added."
-                )
-
-    with st.expander("Add documents 2", expanded=True):
-        uploaded_files = st.file_uploader(
-            "Upload a document to add it to the Azure Storage Account, compute embeddings and add them to the Azure AI Search index. Check your configuration for available document processors.",
-            type=file_type,
-            accept_multiple_files=True,
-            key="file_uploader2",
         )
         if uploaded_files is not None:
             for up in uploaded_files:
@@ -237,7 +180,6 @@ try:
                 st.success(
                     f"{len(uploaded_files)} documents uploaded. Embeddings added."
                 )
-
 
     with st.expander("Add documents in Batch", expanded=False):
         uploaded_files = st.file_uploader(
@@ -289,6 +231,67 @@ try:
                 on_click=add_urls,
                 key="add_url",
             )
+
+    with st.expander("Add documents step by step: upload > convert > chunk > embed(search client upload documents)", expanded=False):
+        uploaded_files = st.file_uploader(
+            "Upload a document to add it to the Azure Storage Account, compute embeddings and add them to the Azure AI Search index. Check your configuration for available document processors.",
+            type=file_type,
+            accept_multiple_files=True,
+            key="file_uploader_step_by_step",
+        )
+        if uploaded_files is not None:
+            for up in uploaded_files:
+                # Check if the file has just been uploaded  
+                if up.name in st.session_state.get("uploaded_files", []):  
+                    st.warning(f"The file '{up.name}' has just been uploaded.")  
+                    continue  # Skip processing this file and continue with the next one
+                if st.session_state.get("filename", "") != up.name:
+                    # Upload a new file
+                    # To read file as bytes:
+                    bytes_data = up.getvalue()
+                    st.session_state["filename"] = up.name
+                    st.session_state["file_url"] = blob_client.upload_file(bytes_data, up.name, metadata={"title": urllib.parse.quote(up.name)})
+                    st.success(f"""File '{up.name}' uploaded to Azure Storage, stored at {st.session_state["file_url"]}.""")
+                    
+                    # Convert the file to markdown file
+                    with st.spinner(f"Converting file '{up.name}' ..."):
+                        md_content = azure_document_intelligence_client.analyze_layout(st.session_state["file_url"], up.name, gen_image_description=True)
+                        converted_file_name = f"converted/{up.name}_converted.md"
+                        # converted_file_url = blob_client.upload_file(md_content.encode('utf-8'), converted_file_name)
+                        # blob_client.upsert_blob_metadata(up.name, {"converted": "true"})
+                    st.success(f"Converted file '{up.name}' to the markdown file '{converted_file_name}', and uploaded to converted_file_url")
+                    
+                    # Chunk the markdown file
+                    with st.spinner(f"Chunking file: '{converted_file_name}' ..."):
+                        md_file_content = blob_client.download_file(converted_file_name).decode('utf-8')
+                        # st.write("md_content == md_file_content: ", md_content == md_file_content)
+                        splits = text_splitter.split_text(md_file_content)
+                    st.success(f"Chunked file '{converted_file_name}' into {len(splits)} chunks.")
+                    
+                    # Embedding the chunks
+                    with st.spinner(f"Embedding and indexing file: '{converted_file_name}' ..."):
+                        source_documents = format_to_source_document(st.session_state["file_url"], splits)
+                        documents_to_upload: List[SourceDocument] = []
+                        for document in source_documents:
+                            documents_to_upload.append(convert_to_search_document(document))
+                        response = azure_search_helper.get_search_client().upload_documents(
+                            documents_to_upload
+                        )
+                        if not all([r.succeeded for r in response]):
+                            logger.error("Failed to upload documents to search index")
+                            raise Exception(response)
+                        blob_client.upsert_blob_metadata(up.name, {"embeddings_added": "true"})
+                    st.success(f"file '{converted_file_name}' embedd to vector store.")
+
+                # Update the list of uploaded files in the session state
+                if "uploaded_files" not in st.session_state:
+                    st.session_state["uploaded_files"] = []
+                st.session_state["uploaded_files"].append(up.name)
+            if len(uploaded_files) > 0:
+                st.success(
+                    f"{len(uploaded_files)} documents uploaded. Embeddings added."
+                )
+
 
 except Exception:
     st.error(traceback.format_exc())
