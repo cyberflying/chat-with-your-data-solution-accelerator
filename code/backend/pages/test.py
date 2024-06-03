@@ -1,4 +1,6 @@
 import streamlit as st
+import sys
+from os import path
 import logging
 import urllib.parse
 from batch.utilities.helpers.azure_blob_storage_client import AzureBlobStorageClient
@@ -9,8 +11,27 @@ from langchain_community.document_loaders import AzureAIDocumentIntelligenceLoad
 import requests
 from langchain.text_splitter import MarkdownHeaderTextSplitter, TokenTextSplitter, TextSplitter
 
+sys.path.append(path.join(path.dirname(__file__), ".."))
 env_helper: EnvHelper = EnvHelper()
 logger = logging.getLogger(__name__)
+
+st.set_page_config(
+    page_title="Test",
+    page_icon=path.join("images", "favicon.ico"),
+    layout="wide",
+    menu_items=None,
+)
+mod_page_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            </style>
+            """
+st.markdown(mod_page_style, unsafe_allow_html=True)
+
+
+
 
 ##############
 # 测试上传文件含有空格和中文时，使用
@@ -25,6 +46,9 @@ logger = logging.getLogger(__name__)
 # st.write("original == quote?:", file_name == url)
 # st.write("quote == quote_plus?:", url == url_plus)
 ##############目前将文档添加到search index时，filename还是会转义，和blob name不一致！
+
+
+
 
 
 #################
@@ -76,6 +100,9 @@ logger = logging.getLogger(__name__)
 
 
 
+
+
+
 #################################
 # from PIL import Image
 # import io
@@ -124,6 +151,7 @@ logger = logging.getLogger(__name__)
 
 # st.write("out.pdf 已输出到当前目录中。")
 # #################################
+
 
 
 
@@ -189,6 +217,70 @@ logger = logging.getLogger(__name__)
 
 
 
+
+#################################
+#  https://docs.streamlit.io/knowledge-base/using-streamlit/how-to-get-row-selections
+#  测试使用st.data_editor获取用户选择的行
+# import pandas as pd
+
+# df = pd.DataFrame(
+#     {
+#         "Animal": ["Lion", "Elephant", "Giraffe", "Monkey", "Zebra"],
+#         "Habitat": ["Savanna", "Forest", "Savanna", "Forest", "Savanna"],
+#         "Lifespan (years)": [15, 60, 25, 20, 25],
+#         "Average weight (kg)": [190, 5000, 800, 10, 350],
+#     }
+# )
+
+# def dataframe_with_selections(df):
+#     df_with_selections = df.copy()
+#     df_with_selections.insert(0, "Select", False)
+
+#     # Get dataframe row-selections from user with st.data_editor
+#     edited_df = st.data_editor(
+#         df_with_selections,
+#         hide_index=True,
+#         column_config={"Select": st.column_config.CheckboxColumn(required=True)},
+#         disabled=df.columns,
+#     )
+
+#     # Filter the dataframe using the temporary column, then drop the column
+#     selected_rows = edited_df[edited_df.Select]
+#     return selected_rows.drop('Select', axis=1)
+
+
+# selection = dataframe_with_selections(df)
+# st.write("Your selection:")
+# st.write(selection)
+
+# df_with_selections = df.copy()
+# st.write("df_with_selections:", df_with_selections)
+
+# df_with_selections.insert(0, "Select", False)
+# st.write("df_with_selections:", df_with_selections)
+
+# st.write("df.columns:", df.columns)
+# edited_df = st.data_editor(
+#     df_with_selections,
+#     hide_index=True,
+#     column_config={"Select": st.column_config.CheckboxColumn(required=True)},
+#     disabled=df.columns,
+# )
+# st.write("edited_df:", edited_df)
+
+# st.write("edited_df.Select:", edited_df.Select)
+# selected_rows = edited_df[edited_df.Select]
+# st.write("selected_rows:", selected_rows)
+
+# selection = selected_rows.drop('Select', axis=1)
+# st.write("Your selection:", selection)
+
+#################################
+
+
+
+
+
 #################################
 #测试将 MD文件进行分割
 
@@ -226,8 +318,9 @@ for text in splits:
 #################################
 st.write("#" * 60)
 st.write("process document: DI处理完了, 改写到 document loading and chunking")
-st.write("process document: 处理 URL.  convert to pdf and upload to blob storage, and then 63.Process?")
+st.write("process document: 处理 URL.  convert to pdf and upload to blob storage, and then 06.Process?")
 st.write("process document: 处理 text")
 st.write("process document: 处理 word DOCX")
 st.write("测试上传 0KB的文件报错")
 #################################
+

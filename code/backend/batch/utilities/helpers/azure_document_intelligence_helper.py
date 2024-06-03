@@ -275,9 +275,7 @@ If the image is mostly text, use OCR to extract the text as it is displayed in t
         """
 
         # with open(input_file_path, "rb") as f:
-        #     poller = self.document_intelligence_client.begin_analyze_document(
-        #         "prebuilt-layout", analyze_request=f, content_type="application/octet-stream", output_content_format=ContentFormat.MARKDOWN 
-        #     )
+        #     poller = self.document_intelligence_client.begin_analyze_document("prebuilt-layout", analyze_request=f, content_type="application/octet-stream", output_content_format=ContentFormat.MARKDOWN)
 
         # poller = self.document_intelligence_client.begin_analyze_document("prebuilt-layout", analyze_request=bytes_data, content_type="application/octet-stream", output_content_format=ContentFormat.MARKDOWN)
 

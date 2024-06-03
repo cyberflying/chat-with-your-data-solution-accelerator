@@ -264,7 +264,6 @@ try:
                     # Chunk the markdown file
                     with st.spinner(f"Chunking file: '{converted_file_name}' ..."):
                         md_file_content = blob_client.download_file(converted_file_name).decode('utf-8')
-                        # st.write("md_content == md_file_content: ", md_content == md_file_content)
                         splits = text_splitter.split_text(md_file_content)
                     st.success(f"Chunked file '{converted_file_name}' into {len(splits)} chunks.")
                     
@@ -281,7 +280,7 @@ try:
                             logger.error("Failed to upload documents to search index")
                             raise Exception(response)
                         blob_client.upsert_blob_metadata(up.name, {"embeddings_added": "true"})
-                    st.success(f"file '{converted_file_name}' embedd to vector store.")
+                    st.success(f"file '{converted_file_name}' embedd to Azure search index.")
 
                 # Update the list of uploaded files in the session state
                 if "uploaded_files" not in st.session_state:
