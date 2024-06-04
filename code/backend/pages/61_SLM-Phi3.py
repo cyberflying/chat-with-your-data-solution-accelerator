@@ -8,7 +8,7 @@ from os import path
 sys.path.append(path.join(path.dirname(__file__), ".."))
 st.set_page_config(
     page_title="SLM Phi3",
-    page_icon=path.join("images", "azure.ico"),
+    page_icon=path.join("images", "Copilot.png"),
     layout="wide",
     menu_items=None,
 )

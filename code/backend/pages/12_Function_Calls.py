@@ -17,7 +17,7 @@ from batch.utilities.helpers.env_helper import EnvHelper
 sys.path.append(path.join(path.dirname(__file__), ".."))
 st.set_page_config(
     page_title="Call Center",
-    page_icon=path.join("images", "favicon.ico"),
+    page_icon=path.join("images", "Copilot.png"),
     layout="wide",
     menu_items=None,
 )

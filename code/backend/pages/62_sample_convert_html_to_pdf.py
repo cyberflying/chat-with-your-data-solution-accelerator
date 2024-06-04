@@ -45,10 +45,9 @@ def add_urls():
     i = 1
     for url in urls:
         # pdfkit.from_url(url, f'out{i}.pdf', options=options)
+        file_name = url.split("?")[0].split("/")[-1]
         pdf = pdfkit.from_url(url, options=options)
-        blob_client.upload_file(pdf, f"out{i}.pdf", metadata={"title": f"out{i}.pdf"})
-        # st.write("pdf type:", type(pdf))
-        # st.write("pdf:", pdf)
+        blob_client.upload_file(pdf, f"url_{i}_{file_name}.pdf", metadata={"title": f"url_{i}_{file_name}.pdf"})
         i += 1
 
 

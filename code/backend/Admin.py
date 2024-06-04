@@ -26,7 +26,7 @@ logger.debug("Starting admin app")
 
 st.set_page_config(
     page_title="Admin",
-    page_icon=os.path.join("images", "favicon.ico"),
+    page_icon=os.path.join("images", "Copilot.png"),
     layout="wide",
     menu_items=None,
 )

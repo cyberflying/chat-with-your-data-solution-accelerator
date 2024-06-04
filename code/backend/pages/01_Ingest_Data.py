@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 st.set_page_config(
     page_title="Ingest Data",
-    page_icon=path.join("images", "favicon.ico"),
+    page_icon=path.join("images", "Copilot.png"),
     layout="wide",
     menu_items=None,
 )

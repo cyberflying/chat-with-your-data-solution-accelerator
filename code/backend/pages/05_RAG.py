@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 st.set_page_config(
     page_title="RAG",
-    page_icon=path.join("images", "favicon.ico"),
+    page_icon=path.join("images", "Copilot.png"),
     layout="wide",
     menu_items=None,
 )
