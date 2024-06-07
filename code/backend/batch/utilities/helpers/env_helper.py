@@ -223,6 +223,9 @@ class EnvHelper:
             f"https://{self.AZURE_SPEECH_SERVICE_REGION}.api.cognitive.microsoft.com/",
         )
 
+        self.AZURE_LANGUAGE_ENDPOINT = os.getenv("AZURE_LANGUAGE_ENDPOINT")
+        self.AZURE_LANGUAGE_KEY = self.secretHelper.get_secret("AZURE_LANGUAGE_KEY")
+
         self.LOAD_CONFIG_FROM_BLOB_STORAGE = self.get_env_var_bool(
             "LOAD_CONFIG_FROM_BLOB_STORAGE"
         )

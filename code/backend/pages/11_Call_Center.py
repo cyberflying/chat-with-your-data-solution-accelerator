@@ -46,8 +46,8 @@ azure_openai_api_key = env_helper.AZURE_OPENAI_API_KEY
 azure_openai_deployment = env_helper.AZURE_OPENAI_MODEL
 speech_region = env_helper.AZURE_SPEECH_SERVICE_REGION
 speech_key = env_helper.AZURE_SPEECH_KEY
-language_endpoint = os.getenv("AZURE_LANGUAGE_ENDPOINT")
-language_key = os.getenv("AZURE_LANGUAGE_KEY")
+language_endpoint = env_helper.AZURE_LANGUAGE_ENDPOINT
+language_key = env_helper.AZURE_LANGUAGE_KEY
 
 
 
