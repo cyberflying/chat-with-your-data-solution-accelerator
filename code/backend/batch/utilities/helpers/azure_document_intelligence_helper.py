@@ -327,7 +327,7 @@ If the image is mostly text, use OCR to extract the text as it is displayed in t
                                 # print(f"9 \tFigure {idx} cropped and saved as {cropped_image_file_url}")
 
                                 if gen_image_description:
-                                    img_description += self.gen_image_description_with_gpt(self.env_helper.AZURE_OPENAI_ENDPOINT, self.env_helper.AZURE_OPENAI_API_KEY, self.env_helper.AZURE_OPENAI_MODEL, self.env_helper.AZURE_OPENAI_API_VERSION, image_data, figure.caption.content, int(self.env_helper.AZURE_OPENAI_MAX_TOKENS))
+                                    img_description += self.gen_image_description_with_gpt(self.env_helper.AZURE_OPENAI_ENDPOINT, self.env_helper.AZURE_OPENAI_API_KEY, self.env_helper.AZURE_OPENAI_VISION_MODEL, self.env_helper.AZURE_OPENAI_API_VERSION, image_data, figure.caption.content, int(self.env_helper.AZURE_OPENAI_MAX_TOKENS))
                                     # print(f"10 \tDescription of figure {idx}: {img_description}")
                     else:
                         # print("11 \tNo caption found for this figure.")
@@ -351,7 +351,7 @@ If the image is mostly text, use OCR to extract the text as it is displayed in t
                             # print(f"14 \tFigure {idx} cropped and saved as {cropped_image_file_url}")
 
                             if gen_image_description:
-                                img_description += self.gen_image_description_with_gpt(self.env_helper.AZURE_OPENAI_ENDPOINT, self.env_helper.AZURE_OPENAI_API_KEY, self.env_helper.AZURE_OPENAI_MODEL, self.env_helper.AZURE_OPENAI_API_VERSION, image_data, "", int(self.env_helper.AZURE_OPENAI_MAX_TOKENS))
+                                img_description += self.gen_image_description_with_gpt(self.env_helper.AZURE_OPENAI_ENDPOINT, self.env_helper.AZURE_OPENAI_API_KEY, self.env_helper.AZURE_OPENAI_VISION_MODEL, self.env_helper.AZURE_OPENAI_API_VERSION, image_data, "", int(self.env_helper.AZURE_OPENAI_MAX_TOKENS))
                                 # print(f"15 \tDescription of figure {idx}: {img_description}")
                     
                     # replace_figure_description(figure_content, img_description, idx)
