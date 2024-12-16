@@ -3,6 +3,7 @@ from enum import Enum
 
 class ChunkingStrategy(Enum):
     LAYOUT = "layout"
+    LAYOUT2 = "layout2"
     PAGE = "page"
     FIXED_SIZE_OVERLAP = "fixed_size_overlap"
     PARAGRAPH = "paragraph"

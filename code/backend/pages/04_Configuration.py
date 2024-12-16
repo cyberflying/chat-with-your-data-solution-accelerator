@@ -14,7 +14,7 @@ env_helper: EnvHelper = EnvHelper()
 
 st.set_page_config(
     page_title="Configure Prompts",
-    page_icon=os.path.join("images", "favicon.ico"),
+    page_icon=os.path.join("images", "Copilot.png"),
     layout="wide",
     menu_items=None,
 )
