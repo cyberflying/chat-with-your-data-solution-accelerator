@@ -43,11 +43,6 @@ headers_to_split_on = [
     ("#", "Header 1"),
     ("##", "Header 2"),
     ("###", "Header 3"),
-    ("####", "Header 4"),
-    ("#####", "Header 5"),
-    ("######", "Header 6"),  
-    ("#######", "Header 7"), 
-    ("########", "Header 8")
 ]
 text_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on)
 
@@ -142,11 +137,11 @@ def main():
     st.write(
     """
     # Azure Document Intelligence
-    It uses Azure Document Intelligence as document loader, which can extracts tables, paragraphs and layout information from pdf, image, office and html files. 
+    It uses Azure Document Intelligence as document loader, which can extracts tables, paragraphs and layout information from pdf, image, office and html files.
 
-    The output markdown can be used in LangChain's markdown header splitter, which enables semantic chunking of the documents. 
+    The output markdown can be used in LangChain's markdown header splitter, which enables semantic chunking of the documents.
 
-    Then the chunked documents are indexed into vectore store, such as Azure AI Search. 
+    Then the chunked documents are indexed into vectore store, such as Azure AI Search.
     """
     )
 
@@ -154,10 +149,10 @@ def main():
     col1, col2 = st.columns([1, 1])
     with col1:
         st.write("## Document Intelligence Semantic Chunking in RAG architecture")
-        st.image("https://techcommunity.microsoft.com/t5/image/serverpage/image-id/572532i131DF4C27FACF01A/image-size/large")
+        st.image("./images/semantic-chunking-rag.png")
     with col2:
         st.write("## Advanced document processing with Azure AI Document Intelligence and Azure OpenAI services.")
-        st.image("https://techcommunity.microsoft.com/t5/image/serverpage/image-id/569432iDA305FD10F7311CD/image-size/large")
+        st.image("./images/di-figure-md.png")
 
 
     try:
@@ -189,7 +184,7 @@ def main():
             st.session_state['selected_rows'] = []
 
     except Exception as e:
-            logger.error(f"An error occurred while analyzing the document layout: {e}") 
+            logger.error(f"An error occurred while analyzing the document layout: {e}")
             raise ValueError(f"Error: {traceback.format_exc()}. Error: {e}")
 
 
