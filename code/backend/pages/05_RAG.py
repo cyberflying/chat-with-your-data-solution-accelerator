@@ -11,6 +11,7 @@ from langchain_community.vectorstores.azuresearch import AzureSearch
 from langchain_community.vectorstores.redis import Redis
 from langchain.chains import RetrievalQA
 from batch.utilities.helpers.env_helper import EnvHelper
+from batch.utilities.helpers.llm_helper import LLMHelper
 from batch.utilities.helpers.azure_blob_storage_client import AzureBlobStorageClient
 import os
 import sys
@@ -21,6 +22,7 @@ import logging
 # page layout configuration
 sys.path.append(path.join(path.dirname(__file__), ".."))
 env_helper: EnvHelper = EnvHelper()
+llm_helper = LLMHelper()
 logger = logging.getLogger(__name__)
 
 st.set_page_config(
@@ -29,14 +31,13 @@ st.set_page_config(
     layout="wide",
     menu_items=None,
 )
-mod_page_style = """
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            header {visibility: hidden;}
-            </style>
-            """
-st.markdown(mod_page_style, unsafe_allow_html=True)
+
+def load_css(file_path):
+    with open(file_path) as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+# Load the common CSS
+load_css("pages/common.css")
 
 
 
@@ -56,7 +57,7 @@ redis_url = "REDIS_URL"
 redis_index_name = "REDIS_INDEX_NAME"
 azure_search_endpoint: str = env_helper.AZURE_SEARCH_SERVICE
 azure_search_key: str = env_helper.AZURE_SEARCH_KEY
-azure_search_index_name: str = env_helper.AZURE_SEARCH_INDEX 
+azure_search_index_name: str = env_helper.AZURE_SEARCH_INDEX
 
 
 
@@ -69,7 +70,7 @@ def main():
     st.write(
     """
     # AOAI RAG
-    Demonstrate an example of using Azure OpenAI to delvelop a RAG pattern. 
+    Demonstrate an example of using Azure OpenAI to delvelop a RAG pattern.
     ##
     """
     )
@@ -111,7 +112,7 @@ def main():
 
     def format_docs(docs):
         return "\n\n".join(doc.page_content for doc in docs)
-    
+
     rag_chain = (
         {"context": retriever | format_docs, "question": RunnablePassthrough()}
         | prompt
@@ -149,7 +150,7 @@ def main():
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
-    
+
 
     # Await a user message and handle the chat prompt when it comes in.
     if question := st.chat_input("Enter a message:"):
@@ -158,7 +159,7 @@ def main():
         # Echo the user's prompt to the chat window
         with st.chat_message("user"):
             st.markdown(question)
-        
+
 
         # Retrieve relevant chunks based on the question
         # retrieved_docs = retriever.get_relevant_documents(question)
@@ -171,6 +172,6 @@ def main():
     clear_chat = st.button("Clear chat", key="clear_chat", on_click=clear_chat_data)
 
 
-    
+
 if __name__ == "__main__":
     main()
