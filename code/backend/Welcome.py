@@ -25,7 +25,7 @@ logger.debug("Starting admin app")
 
 
 st.set_page_config(
-    page_title="Admin",
+    page_title="Welcome",
     page_icon=os.path.join("images", "Copilot.png"),
     layout="wide",
     menu_items=None,
@@ -41,17 +41,18 @@ def load_css(file_path):
 load_css("pages/common.css")
 
 
-col1, col2, col3 = st.columns([1, 2, 1])
+col1, col2 = st.columns([1, 8])
 with col1:
     st.image(os.path.join("images", "logo.png"))
+with col2:
+    st.write("")
+    st.write("# :rainbow[Microsoft Innovation Hub]")
 
-st.write("# Chat with your data Solution Accelerator")
 
-st.write(
-    """
-         * If you want to ingest data (pdf, websites, etc.), then use the `Ingest Data` tab
-         * If you want to explore how your data was chunked, check the `Explore Data` tab
-         * If you want to delete your data, check the `Delete Data` tab
-         * If you want to adapt the underlying prompts, logging settings and others, use the `Configuration` tab
-         """
-)
+col1, col2 = st.columns([1, 1])
+with col1:
+    st.write("### Chat with your Data")
+    st.image("./images/semantic-chunking-rag.png", caption="RAG Architecture")
+with col2:
+    st.write("### Agent")
+    st.image("./images/AutoGen_AgentChat_Architure.jpg", caption="AutoGen AgentChat Architecture")

@@ -1,19 +1,11 @@
-import os
 from azure.core.credentials import AzureKeyCredential
 from azure.identity import DefaultAzureCredential
 from azure.ai.documentintelligence import DocumentIntelligenceClient
-from azure.ai.documentintelligence.models import AnalyzeDocumentRequest, ContentFormat
-# Crop figure from the document (pdf or image) based on the bounding box
-import requests
-from PIL import Image
-import io
-import fitz  # PyMuPDF
-import mimetypes
-import base64
+from azure.ai.documentintelligence.models import AnalyzeDocumentRequest, DocumentContentFormat, AnalyzeOutputOption, AnalyzeResult
+import re
 from .env_helper import EnvHelper
 from .llm_helper import LLMHelper
 from .azure_blob_storage_client import AzureBlobStorageClient
-from docx import Document
 import traceback
 import logging
 
@@ -39,143 +31,19 @@ class AzureDocumentIntelligenceClient:
                 credential=AzureKeyCredential(self.AZURE_FORM_RECOGNIZER_KEY),
             )
 
-
-
-    # Crop figure from the document (pdf or image) based on the bounding box
-    @staticmethod
-    def crop_image_from_image(image_data, page_number, bounding_box):
+    def gen_figure_description(self, figure_url, caption, max_tokens=1000):
         """
-        Crops an image based on a bounding box.
-
-        :param image_data: BytesIO object containing the image data.
-        :param page_number: The page number of the image to crop (for TIFF format).
-        :param bounding_box: A tuple of (left, upper, right, lower) coordinates for the bounding box.
-        :return: A cropped image.
-        :rtype: PIL.Image.Image
-        """
-        with Image.open(image_data) as img:
-            if img.format == "TIFF":
-                # Open the TIFF image
-                img.seek(page_number)
-                img = img.copy()
-
-            # The bounding box is expected to be in the format (left, upper, right, lower).
-            cropped_image = img.crop(bounding_box)
-            return cropped_image
-
-
-    @staticmethod
-    def crop_image_from_pdf_page(pdf_data, page_number, bounding_box):
-        """
-        Crops a region from a given page in a PDF and returns it as an image.
-
-        :param pdf_data: BytesIO object containing the PDF data.
-        :param page_number: The page number to crop from (0-indexed).
-        :param bounding_box: A tuple of (x0, y0, x1, y1) coordinates for the bounding box.
-        :return: A PIL Image of the cropped area.
-        """
-        doc = fitz.open("pdf", pdf_data.read())
-        page = doc.load_page(page_number)
-
-        # Cropping the page. The rect requires the coordinates in the format (x0, y0, x1, y1).
-        bbx = [x * 72 for x in bounding_box]
-        rect = fitz.Rect(bbx)
-        pix = page.get_pixmap(matrix=fitz.Matrix(300/72, 300/72), clip=rect)
-        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-        doc.close()
-        return img
-
-
-    @staticmethod
-    def crop_image_from_docx(docx_data, image_number, bounding_box):
-        """
-        Crops an image from a docx file.
-
-        :param docx_data: BytesIO object containing the docx data.
-        :param image_number: The number of the image to crop (0-indexed).
-        :param bounding_box: A tuple of (left, upper, right, lower) coordinates for the bounding box.
-        :return: A cropped image.
-        :rtype: PIL.Image.Image
-        """
-        doc = Document(docx_data)
-        images = []
-        for rel in doc.part.rels.values():
-            if "image" in rel.reltype:
-                image_data = rel.blob
-                image = Image.open(io.BytesIO(image_data))
-                images.append(image)
-
-        if image_number < len(images):
-            # The bounding box is expected to be in the format (left, upper, right, lower).
-            cropped_image = images[image_number].crop(bounding_box)
-            return cropped_image
-        else:
-            raise ValueError(f"Image number {image_number} not found in docx file")
-
-
-    @staticmethod
-    def crop_image_from_file(file_path_or_url, page_number, bounding_box):
-        """
-        Crop an image from a file.
-
-        Args:
-            file_path_or_url (str): The path or URL to the file.
-            page_number (int): The page number (for PDF and TIFF files, 0-indexed).
-            bounding_box (tuple): The bounding box coordinates in the format (x0, y0, x1, y1).
-
-        Returns:
-            A PIL Image of the cropped area.
-        """
-        if os.path.exists(file_path_or_url):
-            # It's a file path
-            with open(file_path_or_url, 'rb') as f:
-                file_data = io.BytesIO(f.read())
-        else:
-            # It's a URL
-            response = requests.get(file_path_or_url)
-            file_data = io.BytesIO(response.content)
-
-        mime_type = mimetypes.guess_type(file_path_or_url.split('?')[0])[0]
-
-        if mime_type == "application/pdf":
-            return AzureDocumentIntelligenceClient.crop_image_from_pdf_page(file_data, page_number, bounding_box)
-        elif mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-            return AzureDocumentIntelligenceClient.crop_image_from_docx(file_data, page_number, bounding_box)
-        else:
-            return AzureDocumentIntelligenceClient.crop_image_from_image(file_data, page_number, bounding_box)
-
-    @staticmethod
-    def image_data_to_url(image_data):
-        """
-        Converts a PIL Image to a data URL.
-
-        :param image: A PIL Image.
-        :return: A data URL representing the image.
-        """
-
-        # Encode the image data
-        base64_encoded_data = base64.b64encode(image_data).decode('utf-8')
-
-        # Construct the data URL
-        return f"data:image/png;base64,{base64_encoded_data}"
-
-
-
-    # Use Azure OpenAI (vision model) to understand the semantics of the figure content
-    # @staticmethod
-    def gen_image_description_with_gpt(self, image_url, caption, max_tokens=2000):
-        """
-        Generates a description for an image using the GPT-4V model.
+        Generates a description for an image using the GPT vision model.
 
         Parameters:
-        - image_path (str): The path to the image file.
+        - figure_url (str): The url to the image file.
         - caption (str): The caption for the image.
 
         Returns:
-        - img_description (str): The generated description for the image.
+        - figure_description (str): The generated description for the image.
         """
+
         gpt_vision_client = self.llm_helper.openai_client
-        # gpt_vision_client = self.llm_helper.get_llm()
 
         # We send both image caption and the image body to GPT for better understanding
         if caption:
@@ -189,16 +57,17 @@ class AzureDocumentIntelligenceClient:
                 {
                     "role": "system",
                     "content": """
-  - You are an assistant that generates rich and detailed descriptions of images.  
-  - Be accurate and comprehensive in extracting information from the image, including non-textual elements.  
-  - For images containing visualizations such as bar charts, line charts, pie charts, scatter plots, and stacked charts, analyze and describe the trends, patterns, and insights these visualizations convey, rather than solely focusing on numbers and labels.  
-  - Ensure to interpret and explain the significance of the data trends and patterns in the context of the image.  
-  - For images primarily containing text, use OCR to accurately extract and transcribe the text as it appears in the image. Utilize the position of text and charts to inform the overall description.  
-  - Automatically detect the primary language used in the image text and generate the description in that language to maintain consistency. For example, if the text in the image is in Chinese, generate the description in Chinese.  
-  - Avoid abbreviations and maintain complete sentences to provide a thorough explanation of the image content.  
-  - Ensure that the description captures the context and purpose of the image, providing insights into any relevant information implied by the visual elements.  
-  - Format the generated description using Markdown to ensure clear and structured presentation of information.  
-  """
+- You are an assistant that generates rich and detailed descriptions of images.
+- When extracting information from images, be accurate and comprehensive, including non-textual elements and numbers. Pay attention to accurately capturing the positive and negative signs of numbers.
+- For images primarily containing text and numbers, use OCR to accurately extract and transcribe the text and numbers from the image. Utilize the position of the text and charts to enhance the overall description.
+- For images containing visual content such as bar charts, line charts, pie charts, scatter plots, and stacked charts, first extract the text and numbers, then analyze and describe the trends, patterns, and insights conveyed by these visualizations.
+- Pay attention to the correspondence between numbers, axes, and legends (including colors and shapes).
+- Ensure to interpret and explain the significance of the data trends and patterns in the context of the image.
+- Automatically detect the primary language used in the image text and generate the description in that language to maintain consistency. For example, if the text in the image is in Chinese, generate the description in Chinese.
+- Avoid abbreviations and maintain complete sentences to provide a thorough explanation of the image content.
+- Ensure that the description captures the context and purpose of the image, providing insights into any relevant information implied by the visual elements.
+- Format the generated description using Markdown to ensure clear and structured presentation of information. But DO NOT use Markdown header symbol #.
+"""
                 },
                 { "role": "user", "content": [
                     {
@@ -208,7 +77,7 @@ class AzureDocumentIntelligenceClient:
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": image_url
+                            "url": figure_url
                         }
                     }
                 ] }
@@ -218,155 +87,125 @@ class AzureDocumentIntelligenceClient:
             stream=False
         )
 
-        img_description = response.choices[0].message.content
-        return img_description
+        figure_description = response.choices[0].message.content
+        return figure_description
 
-
-
-    # Update markdown figure content section with the description from GPT-4V model
-    def update_figure_description(self, md_content, img_description, idx):
+    # Update markdown figure content section with the description from GPT vision model
+    def update_figure_description(self, md_content, figure_description, idx):
         """
         Updates the figure description in the Markdown content.
-        this function work with azure-ai-documentintelligence==1.0.0b3, don't work with azure-ai-documentintelligence==1.0.0b4
 
         Args:
             md_content (str): The original Markdown content.
-            img_description (str): The new description for the image.
+            figure_description (str): The new description for the image.
             idx (int): The index of the figure.
 
         Returns:
             str: The updated Markdown content with the new figure description.
         """
 
-        # The substring you're looking for
-        start_substring = f"![](figures/{idx})"
-        end_substring = "</figure>"
-        new_string = f"<!-- FigureContent=\"{img_description}\" -->"
+        figure_list = []
+        start_pos = 0
+        while True:
+            start_tag = md_content.find("<figure>", start_pos)
+            if start_tag == -1:
+                break
+            end_tag = md_content.find("</figure>", start_tag)
+            if end_tag == -1:
+                break
+            figure_list.append((start_tag, end_tag + len("</figure>")))
+            start_pos = end_tag + len("</figure>")
 
-        new_md_content = md_content
-        # Find the start and end indices of the part to replace
-        start_index = md_content.find(start_substring)
-        if start_index != -1:  # if start_substring is found
-            start_index += len(start_substring)  # move the index to the end of start_substring
-            end_index = md_content.find(end_substring, start_index)
-            if end_index != -1:  # if end_substring is found
-                # Replace the old string with the new string
-                new_md_content = md_content[:start_index] + new_string + md_content[end_index:]
+        if idx < len(figure_list):
+            start, end = figure_list[idx]
+            old_figure_block = md_content[start:end]
 
-        return new_md_content
+            # Find <figcaption>...</figcaption> if present
+            cap_start = old_figure_block.find("<figcaption>")
+            if cap_start != -1:
+                cap_end = old_figure_block.find("</figcaption>", cap_start)
+                if cap_end != -1:
+                    figcaption_block = old_figure_block[cap_start : cap_end + len("</figcaption>")]
+                else:
+                    figcaption_block = ""
+            else:
+                figcaption_block = ""
 
+            new_block = f"<figure>\n{figcaption_block}\n{figure_description}\n</figure>"
+            return md_content[:start] + new_block + md_content[end:]
+
+        return md_content
 
 
     # Analyze a document with Azure AI Document Intelligence Layout model and update figure description in the markdown output
-
-    def analyze_layout(self, input_file_url:str, input_file_name:str, gen_image_description:bool=True):
+    def analyze_layout(self, input_file_url:str, input_file_name:str, gen_figure_desc:bool=True):
         """
-        Analyzes the layout of a document and extracts figures along with their descriptions, then update the markdown output with the new description.
+        Analyzes the layout of a potentially large document in 100-page chunks
+        and extracts figures along with their descriptions, then updates the
+        markdown output with the new descriptions.
 
         Args:
-            input_file_path (str): The path to the input document file.
-            output_folder (str): The path to the output folder where the cropped images will be saved.
+            input_file_url (str): The blob url of the input file.
+            input_file_name (str): The blob name of the input file.
+            gen_figure_desc (bool): if True then extract figures and generate description, if False then do not process figures.
 
         Returns:
-            str: The updated Markdown content with figure descriptions.
-
+            str: The updated Markdown content with the new figure description.
         """
-
-        # with open(input_file_path, "rb") as f:
-        #     poller = self.document_intelligence_client.begin_analyze_document("prebuilt-layout", analyze_request=f, content_type="application/octet-stream", output_content_format=ContentFormat.MARKDOWN)
-
-        # poller = self.document_intelligence_client.begin_analyze_document("prebuilt-layout", analyze_request=bytes_data, content_type="application/octet-stream", output_content_format=ContentFormat.MARKDOWN)
-
         try:
-            analyze_request = AnalyzeDocumentRequest(url_source=input_file_url)
-            poller = self.document_intelligence_client.begin_analyze_document(
-                "prebuilt-layout",
-                analyze_request=analyze_request,
-                content_type="application/json",
-                output_content_format=ContentFormat.MARKDOWN
-            )
-            result = poller.result()
-            md_content = result.content
-            # print("*"*60)
-            # print(md_content)
-            # print("*"*60)
+            chunk_size = 100
+            start_page = 1
+            all_md_content = ""
 
+            while True:
+                end_page = start_page + chunk_size - 1
+                if end_page < start_page:
+                    break
 
-            if result.figures:
-                # print("1 Figures:")
-                for idx, figure in enumerate(result.figures):
-                    figure_content = ""
-                    img_description = ""
-                    # print(f"2 Figure #{idx} has the following spans: {figure.spans}")
-                    for i, span in enumerate(figure.spans):
-                        # print(f"3 Span #{i}: {span}")
-                        figure_content += md_content[span.offset:span.offset + span.length]
-                    # print(f"4 Original figure content in markdown: {figure_content}")
+                pages_param = f"{start_page}-{end_page}"
+                poller = self.document_intelligence_client.begin_analyze_document(
+                    "prebuilt-layout",
+                    body=AnalyzeDocumentRequest(url_source=input_file_url),
+                    pages=pages_param,
+                    output_content_format=DocumentContentFormat.MARKDOWN,
+                    output=[AnalyzeOutputOption.FIGURES],
+                )
+                result: AnalyzeResult = poller.result()
+                if not result.pages:
+                    print(f"No pages found for file {input_file_name} in range {pages_param}.")
+                    break
 
-                    # Note: figure bounding regions currently contain both the bounding region of figure caption and figure body
-                    if figure.caption:
-                        caption_region = figure.caption.bounding_regions
-                        # print(f"5 \tCaption: {figure.caption.content}")
-                        # print(f"6 \tCaption bounding region: {caption_region}")
-                        for region in figure.bounding_regions:
-                            if region not in caption_region:
-                                # print(f"7 \tFigure body bounding regions: {region}")
-                                # To learn more about bounding regions, see https://aka.ms/bounding-region
-                                boundingbox = (
-                                        region.polygon[0],  # x0 (left)
-                                        region.polygon[1],  # y0 (top)
-                                        region.polygon[4],  # x1 (right)
-                                        region.polygon[5]   # y1 (bottom)
-                                    )
-                                # print(f"8 \tFigure body bounding box in (x0, y0, x1, y1): {boundingbox}")
-                                cropped_image = AzureDocumentIntelligenceClient.crop_image_from_file(input_file_url, region.page_number - 1, boundingbox) # page_number is 1-indexed
-                                image_bytes_io = io.BytesIO()
-                                cropped_image.save(image_bytes_io, format='PNG')
-                                image_data = image_bytes_io.getvalue()
-                                image_url = AzureDocumentIntelligenceClient.image_data_to_url(image_data)
-                                output_file = f"converted/{input_file_name}_cropped_image_{idx}.png"
-                                cropped_image_file_url = self.blob_client.upload_file(bytes_data=image_data, file_name=output_file)
-                                # print(f"9 \tFigure {idx} cropped and saved as {cropped_image_file_url}")
+                model_id = result.model_id
+                chunk_md_content = result.content
+                operation_id = poller.details["operation_id"]
 
-                                if gen_image_description:
-                                    img_description += self.gen_image_description_with_gpt(image_url, figure.caption.content, int(self.env_helper.AZURE_OPENAI_MAX_TOKENS))
-                                    # print(f"10 \tDescription of figure {idx}: {img_description}")
-                    else:
-                        # print("11 \tNo caption found for this figure.")
-                        for region in figure.bounding_regions:
-                            # print(f"12 \tFigure body bounding regions: {region}")
-                            # To learn more about bounding regions, see https://aka.ms/bounding-region
-                            boundingbox = (
-                                    region.polygon[0],  # x0 (left)
-                                    region.polygon[1],  # y0 (top
-                                    region.polygon[4],  # x1 (right)
-                                    region.polygon[5]   # y1 (bottom)
-                                )
-                            # print(f"13 \tFigure body bounding box in (x0, y0, x1, y1): {boundingbox}")
+                # Extract figures and generate descriptions
+                if gen_figure_desc and result.figures:
+                    for idx, figure in enumerate(result.figures):
+                        response = self.document_intelligence_client.get_analyze_result_figure(
+                            model_id=model_id, result_id=operation_id, figure_id=figure.id
+                        )
+                        figure_caption = figure.caption.content if figure.caption else ""
+                        figure_filename = f"converted/{input_file_name}-{figure.id}.png"
+                        figure_file_url = self.blob_client.upload_file(bytes_data=response, file_name=figure_filename)
+                        figure_description = self.gen_figure_description(figure_file_url, figure_caption, int(self.env_helper.AZURE_OPENAI_MAX_TOKENS))
+                        chunk_md_content = self.update_figure_description(chunk_md_content, figure_description, idx)
+                elif result.figures:
+                    print(f"Figures found in file {input_file_name} for pages {pages_param}, but set it to not generate figure description.")
+                else:
+                    print(f"No figures found in file {input_file_name} for pages {pages_param}.")
 
-                            cropped_image = AzureDocumentIntelligenceClient.crop_image_from_file(input_file_url, region.page_number - 1, boundingbox) # page_number is 1-indexed
-                            image_bytes_io = io.BytesIO()
-                            cropped_image.save(image_bytes_io, format='PNG')
-                            image_data = image_bytes_io.getvalue()
-                            image_url = AzureDocumentIntelligenceClient.image_data_to_url(image_data)
-                            output_file = f"converted/{input_file_name}_cropped_image_{idx}.png"
-                            cropped_image_file_url = self.blob_client.upload_file(bytes_data=image_data, file_name=output_file)
-                            # print(f"14 \tFigure {idx} cropped and saved as {cropped_image_file_url}")
+                all_md_content += chunk_md_content
 
-                            if gen_image_description:
-                                img_description += self.gen_image_description_with_gpt(image_url, "", int(self.env_helper.AZURE_OPENAI_MAX_TOKENS))
-                                # print(f"15 \tDescription of figure {idx}: {img_description}")
-
-                    # replace_figure_description(figure_content, img_description, idx)
-                    md_content = self.update_figure_description(md_content, img_description, idx)
-                    figure_file_name = output_file.split("/")[-1].replace(" ", "%20")
-                    md_content = md_content.replace(f"figures/{idx}", f"{figure_file_name}")
+                if len(result.pages) < chunk_size:
+                    break
+                start_page += chunk_size
 
             converted_file_name = f"converted/{input_file_name}_converted.md"
-            converted_file_url = self.blob_client.upload_file(md_content.encode('utf-8'), converted_file_name)
+            converted_file_url = self.blob_client.upload_file(all_md_content.encode('utf-8'), converted_file_name)
             self.blob_client.upsert_blob_metadata(input_file_name, {"converted": "true"})
 
-            return md_content
+            return all_md_content
         except Exception as e:
             logger.error(f"An error occurred while analyzing the document layout: {e}")
             raise ValueError(f"Error: {traceback.format_exc()}. Error: {e}")

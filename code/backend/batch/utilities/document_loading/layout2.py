@@ -15,15 +15,15 @@ class Layout2DocumentLoading(DocumentLoadingBase):
         pages_content = azure_document_intelligence_client.analyze_layout(
             document_url,
             input_file_name,
-            gen_image_description=True
+            gen_figure_desc = False
         )
         documents = [
-                        SourceDocument(
-                            content=pages_content,
-                            source=document_url,
-                            offset=0,
-                            page_number=1,
-                        )
+            SourceDocument(
+                content=pages_content,
+                source=document_url,
+                offset=0,
+                page_number=1,
+            )
         ]
         # documents = [
         #     SourceDocument(

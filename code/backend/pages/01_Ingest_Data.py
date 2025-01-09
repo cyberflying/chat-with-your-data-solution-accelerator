@@ -152,7 +152,7 @@ try:
     embedder = EmbedderFactory.create(env_helper)
 
 
-    with st.expander("Add documents: upload > embedder", expanded=True):
+    with st.expander("Add documents: upload > embedder. Do not generate figure description.", expanded=True):
         uploaded_files = st.file_uploader(
             "Upload a document to add it to the Azure Storage Account, compute embeddings and add them to the Azure AI Search index. Check your configuration for available document processors.",
             type=file_type,
@@ -241,7 +241,8 @@ try:
                 key="add_url",
             )
 
-    with st.expander("Add documents step by step: upload > convert > chunk > embed(search client upload documents)", expanded=False):
+    with st.expander("Add documents step by step: upload > convert > chunk > embed(search client upload documents)", expanded=True):
+        gen_figure_desc = st.checkbox("Generate figure descriptions", value=True)
         uploaded_files = st.file_uploader(
             "Upload a document to add it to the Azure Storage Account, compute embeddings and add them to the Azure AI Search index. Check your configuration for available document processors.",
             type=file_type,
@@ -266,7 +267,7 @@ try:
 
                     # Convert the file to markdown file
                     with st.spinner(f"Converting file '{up.name}' ..."):
-                        md_content = azure_document_intelligence_client.analyze_layout(st.session_state["file_url"], up.name, gen_image_description=True)
+                        md_content = azure_document_intelligence_client.analyze_layout(st.session_state["file_url"], up.name, gen_figure_desc)
                         converted_file_name = f"converted/{up.name}_converted.md"
                     st.success(f"Converted file '{up.name}' to the markdown file '{converted_file_name}', and uploaded it.")
 

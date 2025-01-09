@@ -76,19 +76,18 @@ try:
                         selected_files,
                         env_helper.AZURE_SEARCH_USE_INTEGRATED_VECTORIZATION,
                     )
-                    # when delete one slected file, need to delete converted .md file and cropped images in converted folder
+                    # when delete one slected file, need to delete converted .md file and figure files in converted folder.
                     # files_to_delete:  /kmdocs/rank.png, /kmdocs/北京2023年GDP-P1.pdf, /kmdocs/Hotels.txt
-                    for f in files_to_delete.split(","):
-                        blob_name = f.split("/")[-1]
-                        converted_md_blob_name = "converted/" + blob_name + "_converted.md"
-                        blob_client.delete_file(converted_md_blob_name)
-                        i = 0
-                        while True:
-                            cropped_image_blob_name = "converted/" + blob_name + "_cropped_image_" + str(i) + ".png"
-                            if not blob_client.file_exists(cropped_image_blob_name):
-                                break
-                            blob_client.delete_file(cropped_image_blob_name)
-                            i += 1
+                    container_client = blob_client.blob_service_client.get_container_client(blob_client.container_name)
+                    # list all files in the container
+                    for f in container_client.list_blobs():
+                        # list all files selected to delete
+                        for del_f in files_to_delete.split(","):
+                            # get the selected file name, not include the path, e.g. /kmdocs/, only the file name, e.g. 北京2023年GDP-P1.pdf
+                            del_f_name = del_f.split("/")[-1]
+                            if f.name.startswith(f"converted/{del_f_name}"):
+                                blob_client.delete_file(f.name)
+
                     if len(files_to_delete) > 0:
                         st.success("Deleted files: " + str(files_to_delete))
                         st.rerun()

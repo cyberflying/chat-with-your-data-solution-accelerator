@@ -391,13 +391,13 @@ isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
 name = "azure-ai-documentintelligence"
-version = "1.0.0b3"
+version = "1.0.0"
 description = "Microsoft Azure AI Document Intelligence Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-ai-documentintelligence-1.0.0b3.tar.gz", hash = "sha256:f59ccdda3d67a973d661181ccb4efd5e9d04996e8f2d3fb3031928b1605218c1"},
-    {file = "azure_ai_documentintelligence-1.0.0b3-py3-none-any.whl", hash = "sha256:401a1ef01ee79583210bc041e57e6b39db3a8759edd02dd14b6f52e2e0c5cfdc"},
+    {file = "azure_ai_documentintelligence-1.0.0-py3-none-any.whl", hash = "sha256:cdedb1a67c075f58f47a413ec5846bf8d532a83a71f0c51ec49ce9b5bfe2a519"},
+    {file = "azure_ai_documentintelligence-1.0.0.tar.gz", hash = "sha256:c8b6efc0fc7e65d7892c9585cfd256f7d8b3f2b46cecf92c75ab82e629eac253"},
 ]
 
 [package.dependencies]
@@ -7443,4 +7443,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "13b6ea53c6f4f7bcdb4e7f5ebfb10429519b1cc26fce1e337c63bbac63493290"
+content-hash = "5e5e2eaaef687c0d3580a7111d2dd8d79af69178a05fc4bf2b5274e713e9f5ac"
