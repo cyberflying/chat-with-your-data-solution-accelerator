@@ -1,7 +1,7 @@
 from typing import Optional, Type
 import hashlib
 import json
-from urllib.parse import urlparse, quote, unquote
+from urllib.parse import urlparse, quote
 from ..helpers.azure_blob_storage_client import AzureBlobStorageClient
 
 
@@ -71,7 +71,6 @@ class SourceDocument:
         document_url: Optional[str],
         idx: Optional[int],
     ) -> "SourceDocument":
-        # document_url = unquote(document_url)
         parsed_url = urlparse(document_url)
         file_url = parsed_url.scheme + "://" + parsed_url.netloc + parsed_url.path
         filename = parsed_url.path
