@@ -30,7 +30,7 @@ class Layout2DocumentChunking(DocumentChunkingBase):
         )
         refined_chunks = []
         for chunk in chunked_content_list:
-            if len(chunk.page_content) > 4000:
+            if len(chunk.page_content) > 8000:
                 refined_chunks.extend(recursive_splitter.split_text(chunk.page_content))
             else:
                 refined_chunks.append(chunk.page_content)

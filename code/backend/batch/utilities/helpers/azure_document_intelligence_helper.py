@@ -153,12 +153,12 @@ class AzureDocumentIntelligenceClient:
             str: The updated Markdown content with the new figure description.
         """
         try:
-            chunk_size = 100
+            chunk_pages_size = 100
             start_page = 1
             all_md_content = ""
 
             while True:
-                end_page = start_page + chunk_size - 1
+                end_page = start_page + chunk_pages_size - 1
                 if end_page < start_page:
                     break
 
@@ -197,9 +197,9 @@ class AzureDocumentIntelligenceClient:
 
                 all_md_content += chunk_md_content
 
-                if len(result.pages) < chunk_size:
+                if len(result.pages) < chunk_pages_size:
                     break
-                start_page += chunk_size
+                start_page += chunk_pages_size
 
             converted_file_name = f"converted/{input_file_name}_converted.md"
             converted_file_url = self.blob_client.upload_file(all_md_content.encode('utf-8'), converted_file_name)

@@ -52,7 +52,8 @@ with col2:
 col1, col2 = st.columns([1, 1])
 with col1:
     st.write("### Chat with your Data")
-    st.image("./images/semantic-chunking-rag.png", caption="RAG Architecture")
+    st.image("./images/architecture_cdb.png", caption="RAG Architecture")
+    st.image("./images/semantic-chunking-rag.png")
 with col2:
     st.write("### Agent")
     st.image("./images/AutoGen_AgentChat_Architure.jpg", caption="AutoGen AgentChat Architecture")

@@ -76,7 +76,7 @@ def add_url_embeddings_local(urls: list[str]):
 def sanitize_metadata_value(value):
     # Remove invalid characters
     # return re.sub(r"[^a-zA-Z0-9-_ .]", "?", value)
-    return urllib.parse.quote(up.name)
+    return urllib.parse.quote_plus(up.name)
 
 
 def add_url_embeddings(urls: list[str]):
@@ -135,6 +135,23 @@ def convert_to_search_document(document: SourceDocument):
     }
 
 
+def add_query_param(url, key, value):
+    parsed_url = urllib.parse.urlparse(url)
+    query_params = urllib.parse.parse_qs(parsed_url.query)
+    query_params[key] = value
+    new_query = urllib.parse.urlencode(query_params, doseq=True)
+    new_url = urllib.parse.urlunparse((
+        parsed_url.scheme,
+        parsed_url.netloc,
+        parsed_url.path,
+        parsed_url.params,
+        new_query,
+        parsed_url.fragment
+    ))
+
+    return new_url
+
+
 try:
     config = ConfigHelper.get_active_config_or_default()
     file_type = [
@@ -153,6 +170,7 @@ try:
 
 
     with st.expander("Add documents: upload > embedder. Do not generate figure description.", expanded=True):
+        gen_figure_desc = st.checkbox("Generate descriptions of the figures in the documents.", value=True, key="gen_figure_checkbox1")
         uploaded_files = st.file_uploader(
             "Upload a document to add it to the Azure Storage Account, compute embeddings and add them to the Azure AI Search index. Check your configuration for available document processors.",
             type=file_type,
@@ -172,8 +190,9 @@ try:
                     title = sanitize_metadata_value(up.name)
                     st.session_state["filename"] = up.name
                     blob_url = blob_client.upload_file(bytes_data, up.name, metadata={"title": title})
-                    st.session_state["file_url"] = urllib.parse.unquote(blob_url)
-                    st.success(f"""File '{up.name}' uploaded to Azure Storage, stored at {blob_url}.""")
+                    # pass the gen_figure_desc argument through the url query string
+                    st.session_state["file_url"] = add_query_param(blob_url, "gen_figure_desc", gen_figure_desc)
+                    st.success(f"""File '{up.name}' uploaded to Azure Storage, stored at {blob_url}""")
 
                     # Convert and embedd the file
                     with st.spinner(f"Embedding and indexing file: '{up.name}' ..."):
@@ -242,7 +261,7 @@ try:
             )
 
     with st.expander("Add documents step by step: upload > convert > chunk > embed(search client upload documents)", expanded=True):
-        gen_figure_desc = st.checkbox("Generate figure descriptions", value=True)
+        gen_figure_desc = st.checkbox("Generate descriptions of the figures in the documents.", value=True, key="gen_figure_checkbox2")
         uploaded_files = st.file_uploader(
             "Upload a document to add it to the Azure Storage Account, compute embeddings and add them to the Azure AI Search index. Check your configuration for available document processors.",
             type=file_type,
@@ -262,12 +281,11 @@ try:
                     title = sanitize_metadata_value(up.name)
                     st.session_state["filename"] = up.name
                     blob_url = blob_client.upload_file(bytes_data, up.name, metadata={"title": title})
-                    st.session_state["file_url"] = urllib.parse.unquote(blob_url)
                     st.success(f"""File '{up.name}' uploaded to Azure Storage, stored at {blob_url}.""")
 
                     # Convert the file to markdown file
                     with st.spinner(f"Converting file '{up.name}' ..."):
-                        md_content = azure_document_intelligence_client.analyze_layout(st.session_state["file_url"], up.name, gen_figure_desc)
+                        md_content = azure_document_intelligence_client.analyze_layout(blob_url, up.name, gen_figure_desc)
                         converted_file_name = f"converted/{up.name}_converted.md"
                     st.success(f"Converted file '{up.name}' to the markdown file '{converted_file_name}', and uploaded it.")
 
@@ -279,7 +297,7 @@ try:
 
                     # Embedding the chunks
                     with st.spinner(f"Embedding and indexing file: '{converted_file_name}' ..."):
-                        source_documents = format_to_source_document(st.session_state["file_url"], splits)
+                        source_documents = format_to_source_document(blob_url, splits)
                         documents_to_upload: List[SourceDocument] = []
                         for document in source_documents:
                             documents_to_upload.append(convert_to_search_document(document))

@@ -20,9 +20,12 @@ MOD_PAGE_STYLE = """
 st.markdown(MOD_PAGE_STYLE, unsafe_allow_html=True)
 
 
-col1, col2, col3 = st.columns([1, 2, 1])
+col1, col2 = st.columns([1, 8])
 with col1:
     st.image(os.path.join("images", "logo.png"))
+with col2:
+    st.write("")
+    st.write("# :rainbow[Microsoft Innovation Hub]")
 
 st.write(
     """

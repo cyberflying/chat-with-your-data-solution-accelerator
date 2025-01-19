@@ -13,6 +13,7 @@ from azure.storage.queue import QueueClient, BinaryBase64EncodePolicy
 import chardet
 from .env_helper import EnvHelper
 from azure.identity import DefaultAzureCredential
+import urllib.parse
 
 
 def connection_string(account_name: str, account_key: str):
@@ -124,7 +125,7 @@ class AzureBlobStorageClient:
         )
         # Generate a SAS URL to the blob and return it, if auth_type is rbac, account_key is None, if not, user_delegation_key is None.
         return (
-            blob_client.url
+            urllib.parse.unquote(blob_client.url)
             + "?"
             + generate_blob_sas(
                 self.account_name,
