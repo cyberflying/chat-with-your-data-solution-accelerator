@@ -20,7 +20,7 @@ class LayoutDocumentChunking(DocumentChunkingBase):
             ("##", "Header 2"),
             ("###", "Header 3"),
         ]
-        text_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on)
+        text_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on, strip_headers=False)
         chunked_content_list = text_splitter.split_text(full_document_content)
 
         # Split chunks recursively if they are too large

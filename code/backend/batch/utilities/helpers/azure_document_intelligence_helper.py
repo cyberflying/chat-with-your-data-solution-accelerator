@@ -159,8 +159,8 @@ class AzureDocumentIntelligenceClient:
 
             while True:
                 end_page = start_page + chunk_pages_size - 1
-                if end_page < start_page:
-                    break
+                # if end_page < start_page:
+                #     break
 
                 pages_param = f"{start_page}-{end_page}"
                 poller = self.document_intelligence_client.begin_analyze_document(

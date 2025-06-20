@@ -53,14 +53,14 @@ st.write(
 col1, col2, col3 = st.columns([1, 1, 1], vertical_alignment="top")
 with col1:
     st.header("Round-Robin")
-    st.image("https://microsoft.github.io/autogen/0.4.0.dev8/_images/agentchat-team.svg", caption="Round-Robin")
+    st.image("images/agentchat-team.svg", caption="Round-Robin")
     st.page_link("pages/31_AutoGen-Travel_Planning.py", label="Demo: Travel Planning Agent", icon="👀")
     st.page_link("pages/32_AutoGen-Company_Search_and_Analysis.py", label="Demo: Company Financial Report Agent", icon="👀")
 with col2:
     st.header("Selector Group Chat")
-    st.image("https://microsoft.github.io/autogen/0.4.0.dev8/_images/selector-group-chat.svg", caption="Selector Group Chat")
+    st.image("images/human-in-the-loop-user-proxy.svg", caption="Selector Group Chat")
     st.page_link("pages/33_AutoGen-Web_Search_and_Analysis.py", label="Demo: Web Search Agent", icon="👀")
 with col3:
     st.header("Swarm")
-    st.image("https://microsoft.github.io/autogen/0.4.0.dev8/_images/swarm_stock_research.svg", caption="Swarm")
+    st.image("images/human-in-the-loop-termination.svg", caption="Swarm")
     st.page_link("pages/34_AutoGen-Travel_Planning Pro.py", label="Demo: Travel Planning Pro Agent", icon="👀")

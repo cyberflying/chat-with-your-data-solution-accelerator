@@ -2,12 +2,13 @@ import streamlit as st
 from langchain_community.llms import Ollama
 import sys
 from os import path
+import intel_npu_acceleration_library
 
 
 # page layout configuration
 sys.path.append(path.join(path.dirname(__file__), ".."))
 st.set_page_config(
-    page_title="SLM Phi3.5",
+    page_title="SLM Phi",
     page_icon=path.join("images", "Copilot.png"),
     layout="wide",
     menu_items=None,
@@ -32,14 +33,14 @@ def clear_chat_data():
 def main():
     st.write(
     """
-    # SLM Phi3.5
-    Demonstrate an example of using **SLM Phi3.5**. 
+    # SLM Phi
+    Demonstrate an example of using **SLM Phi**.
     ##
     """
     )
 
 
-    llm = Ollama(model="phi3.5")
+    llm = Ollama(model="phi4")
 
     # Initialize chat history
     if "messages" not in st.session_state:
@@ -49,7 +50,7 @@ def main():
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
-    
+
 
     # Await a user message and handle the chat prompt when it comes in.
     if question := st.chat_input("Enter a message:"):
@@ -58,7 +59,7 @@ def main():
         # Echo the user's prompt to the chat window
         with st.chat_message("user"):
             st.markdown(question)
-        
+
 
         # Retrieve relevant chunks based on the question
         # retrieved_docs = retriever.get_relevant_documents(question)
